@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Giải Đề Trắc Nghiệm</title>
+    <link rel="stylesheet" href="styles.css">
+
+</head>
+<body>
+  <div class="container">
+      <h2>Giải Đề Trắc Nghiệm</h2>
+      <div class="control-panel">
+        <label for="chapterSelector">Chọn chương:</label>
+        <select id="chapterSelector" onchange="updateQuizOptions()">
+          <option value="" disabled selected>-- Chọn chương --</option>
+          <option value="1">Chương 1</option>
+          <option value="2">Chương 2: Mô hình DL QH</option>
+          <option value="3">Chương 3: Lý thuyết thiết kế CSDL</option>
+          <option value="4">Chương 4: Chuẩn hoá dữ liệu</option>
+          <option value="5">Chương 5: Ngôn ngữ truy vấn SQL</option>
+        </select>
+      
+        <label for="quizSelector">Chọn mức độ:</label>
+      <select id="quizSelector" disabled>
+        <option value="" disabled selected>-- Chọn mức độ --</option>
+        <option value="Dễ">Dễ</option>
+        <option value="Trung Bình">Trung Bình</option>
+        <option value="Khó">Khó</option>
+      </select>
+      
+        <button id="startBtn" onclick="loadQuestions()">Bắt đầu</button>
+        
+      </div>
+      <div id="timer"></div>
+      <div id="highScore"></div>
+      
+      <div id="questionContainer" style="display: none;">
+          <div id="questionText"></div>
+          <div id="answers"></div>
+          <div id="result"></div>
+          <button id="nextBtn" onclick="nextQuestion()">Tiếp tục</button>
+      </div>
+  
+      <div id="finalScore"></div>
+      <div id="reviewSection">
+          <h3>Kết quả của bạn</h3>
+          <div id="reviewContent"></div>
+      </div>
+      <button id="restartBtn" onclick="restartQuiz()">Làm lại</button>
+  </div>
+  
+  <footer>
+      © 2025 - Phát triển bởi <a href="https://www.facebook.com/yeumoiphuonganh">Xuân Phú</a>. All rights reserved.
+  </footer>
+
+  <script>
+      let quizzes = {
+          "1": { "Dễ": ["1"], "Trung Bình": ["2"], "Khó": ["3"] },
+          "2": { "Dễ": ["4"], "Trung Bình": ["5"], "Khó": ["6"] },
+          "3": { "Dễ": ["7"], "Trung Bình": ["8"], "Khó": ["9"] },
+          "4": { "Dễ": ["10"], "Trung Bình": ["11"], "Khó": ["12"] },
+          "5": { "Dễ": ["13"], "Trung Bình": ["14"], "Khó": ["15"] }
+      };
+        let quizQuestionsData = {
+                    //Chương 1
+            "1": [
+                { id: "q1", text: "Thế nào là cơ sở dữ liệu quan hệ?", answers: {"A": "Cơ sở dữ liệu được xây dựng dựa trên mô hình dữ liệu quan hệ", "B": "Cơ sở dữ liệu dùng để tạo lập, cập nhật và khai thác CSDL quan hệ", "C": "Cơ sở dữ liệu được xây dựng dựa trên mô hình dữ liệu quan hệ và khai thác CSDL quan hệ", "D": "Cơ sở dữ liệu dùng để tạo lập, cập nhật và khai thác CSDL quan hệ dựa trên mô hình dữ liệu quan hệ"}, correct: "D" },
+                { id: "q2", text: "Trong các phần mềm sau đây, phần mềm nào không phải là hệ quản trị CSDL quan hệ?", answers: {"A": "Microsoft Excel", "B": "Microsoft Access", "C": "Microsoft SQL Server", "D": "Oracle"}, correct: "A" },
+                { id: "q3", text: "An toàn dữ liệu có thể hiểu là?", answers: {"A": "Dễ dàng cho công việc bảo trì dữ liệu", "B": "Ngăn chặn các truy nhập trái phép, sai quy định từ trong ra hoặc từ ngoài vào", "C": "Thống nhất các tiêu chuẩn, thủ tục và các biện pháp bảo vệ, an toàn dữ liệu", "D": "Tính nhất quán và toàn vẹn dữ liệu"}, correct: "B" },
+                { id: "q4", text: "Mục tiêu của cơ sở dữ liệu là?", answers: {"A": "Không làm thay đổi chiến lược truy nhập cơ sở dữ liệu", "B": "Bảo đảm tính độc lập dữ liệu", "C": "Không làm thay đổi cấu trúc lưu trữ dữ liệu", "D": "Tính nhất quán và toàn vẹn dữ liệu"}, correct: "B" },
+                { id: "q5", text: "Hệ quản trị CSDL DBMS (DataBase Management System) là?", answers: {"A": "Hệ thống phần mềm điều khiển các chiến lược truy nhập và tổ chức lưu trữ cơ sở dữ liệu", "B": "Tạo cấu trúc dữ liệu tương ứng với mô hình dữ liệu", "C": "Cập nhật, chèn thêm, loại bỏ hay sửa đổi dữ liệu mức tệp", "D": "Đảm bảo an toàn, bảo mật dữ liệu và tính toàn vẹn dữ liệu"}, correct: "A" },
+                { id: "q6", text: "Cơ sở dữ liệu là:", answers: {"A": "Một bộ sưu tập rất lớn về các loại dữ liệu tác nghiệp, lưu trữ theo quy tắc nhất định nào đó", "B": "Một bộ sưu tập rất lớn về các loại dữ liệu tác nghiệp", "C": "Tập các File dữ liệu tác nghiệp", "D": "Kho dữ liệu tác nghiệp"}, correct: "A" },
+                { id: "q7", text: "Cơ sở dữ liệu là tài nguyên thông tin chung, nghĩa là:", answers: {"A": "Truy nhập trực tuyến", "B": "Nhiều người sử dụng, không phụ thuộc vị trí địa lý, có phân quyền", "C": "Nhiều người sử dụng", "D": "Nhiều người sử dụng, có phân quyền"}, correct: "D" },
+                { id: "q8", text: "Hệ quản trị CSDL - HQTCSDL (DataBase Management System - DBMS) là:", answers: {"A": "Hệ điều hành", "B": "Các phần mềm hệ thống", "C": "Phần mềm điều khiển các chiến lược truy nhập CSDL", "D": "Các phần mềm ứng dụng"}, correct: "C" },
+                { id: "q9", text: "Người quản trị CSDL là?", answers: {"A": "Quyết định cấu trúc lưu trữ & chiến lược truy nhập", "B": "Xác định chiến lược lưu trữ, sao chép, phục hồi dữ liệu", "C": "Cho phép người sử dụng những quyền truy nhập cơ sở dữ liệu", "D": "Một người hay một nhóm người có khả năng chuyên môn cao về tin học, có trách nhiệm quản lý và điều khiển toàn bộ hoạt động của các hệ CSDL"}, correct: "D" },
+                { id: "q10", text: "Chọn một khẳng định nào sau đây là đúng nhất khi nói về đối tượng nghiên cứu CSDL", answers: {"A": "CSDL bao gồm là các thực thể", "B": "CSDL bao gồm là các thực thể và mối quan hệ giữa các thực thể", "C": "Trong CSDL quan hệ có nhiều cách biểu diễn dữ liệu", "D": "Mối quan hệ giữa các thực thể cũng là một loại thực thể"}, correct: "D" },
+                { id: "q11", text: "Chọn một khẳng định nào sau đây là đúng nhất khi nói về ưu điểm tổ chức lưu trữ dữ liệu theo lý thuyết cơ sở dữ liệu?", answers: {"A": "Tốn kém, lãng phí bộ nhớ và các thiết bị lưu trữ", "B": "Cho phép chia sẻ tài nguyên thông tin và giảm dư thừa trong lưu trữ", "C": "Nhiều thuộc tính được mô tả và lưu trữ nhiều lần độc lập với nhau", "D": "Giảm dư thừa dữ liệu trong lưu trữ"}, correct: "B" }
+            ],
+            "2": [
+                { id: "q1", text: "Ưu điểm của cơ sở dữ liệu là?", answers: {"A": "Giảm dư thừa, nhất quán và toàn vẹn của dữ liệu", "B": "Các thuộc tính được mô tả trong nhiều tệp dữ liệu khác nhau", "C": "Khả năng xuất hiện mâu thuẫn và không nhất quán dữ liệu", "D": "Xuất hiện dị thường thông tin"}, correct: "A" },
+                { id: "q2", text: "'Hãy chọn từ/cụm từ tương ứng để hoàn thiện khẳng định sau: Tính độc lập dữ liệu là ....' của các hệ ứng dụng đối với sự thay đổi trong cấu trúc lưu trữ và chiến lược truy nhập dữ liệu?", answers: {"A": "Phương thức truy nhập", "B": "Các chiến lược truy nhập", "C": "Nội dung thông tin", "D": "Tính bất biến"}, correct: "D" },
+                { id: "q3", text: "Chức năng quan trọng của các dịch vụ cơ sở dữ liệu là?", answers: {"A": "Cập nhật, sửa đổi, bổ sung dữ liệu", "B": "Khôi phục thông tin", "C": "Tìm kiếm và tra cứu thông tin", "D": "Xử lý: tìm kiếm, tra cứu, sửa đổi, bổ sung hay loại bỏ dữ liệu"}, correct: "D" },
+                { id: "q4", text: "Mô hình ngoài là?", answers: {"A": "Nội dung thông tin của toàn bộ CSDL", "B": "Nội dung thông tin của một phần dữ liệu dưới cách nhìn của người sử dụng", "C": "Nội dung thông tin của toàn bộ CSDL dưới cách nhìn của người sử dụng", "D": "Nội dung thông tin của một phần cơ sở dữ liệu"}, correct: "B" },
+                { id: "q5", text: "Mô hình quan niệm là?", answers: {"A": "Cách nhìn dữ liệu ở mức ngoài", "B": "Nội dung thông tin của một phần dữ liệu dưới cách nhìn của người sử dụng", "C": "Cách nhìn dữ liệu một cách tổng quát của người sử dụng", "D": "Nội dung thông tin của một phần dữ liệu"}, correct: "C" },
+                { id: "q6", text: "Mô hình trong là?", answers: {"A": "Mô hình biểu diễn cơ sở dữ liệu trừu tượng ở mức quan niệm", "B": "Có nhiều cách biểu diễn CSDL dưới dạng lưu trữ vật lý", "C": "Mô hình lưu trữ vật lý dữ liệu", "D": "Là một trong các mô hình biểu diễn CSDL dưới dạng lưu trữ vật lý"}, correct: "C" },
+                { id: "q7", text: "Mô hình CSDL phân cấp là mô hình?", answers: {"A": "Dữ liệu được biểu diễn bằng con trỏ", "B": "Dữ liệu được biểu diễn bằng cấu trúc cây", "C": "Dữ liệu được biểu diễn bằng mối quan hệ thực thể", "D": "Dữ liệu được biểu diễn bằng bảng"}, correct: "B" },
+                { id: "q8", text: "Đặc trưng cấu trúc của mô hình mạng là?", answers: {"A": "Chứa các liên kết một - một và một - nhiều", "B": "Chứa các liên kết một - một, một - nhiều và nhiều - nhiều", "C": "Chứa các liên kết một - một, một - nhiều và nhiều - nhiều", "D": "Chứa các liên kết nhiều - một và một - nhiều"}, correct: "A" },
+                { id: "q9", text: "Mô hình cơ sở dữ liệu Client-Server?", answers: {"A": "Máy chủ và máy đều tham gia quá trình xử lý", "B": "Máy khách thực hiện các ứng dụng, nó gửi yêu cầu về máy chủ được kết nối với cơ sở dữ liệu, máy chủ xử lý và gửi trả lại kết quả về máy khách", "C": "Máy khách yêu cầu máy chủ cung cấp các loại dịch vụ", "D": "Các máy khách chia sẻ gánh nặng xử lý của máy chủ trung tâm"}, correct: "B" },
+                { id: "q10", text: "Hãy chọn từ/cụm từ tương ứng để hoàn thiện khẳng định sau: Người quản trị CSDL bảo đảm việc truy nhập CSDL. Kiểm tra, kiểm soát các quyền truy nhập của .... Ngăn chặn các truy nhập trái phép, sai quy định từ trong ra hoặc từ ngoài vào?", answers: {"A": "Hệ quản trị cơ sở dữ liệu", "B": "Người quản trị cơ sở dữ liệu", "C": "Hệ ứng dụng", "D": "Người sử dụng"}, correct: "D" },
+                { id: "q11", text: "Hãy chọn từ/cụm từ tương ứng để hoàn thiện khẳng định sau: Tính độc lập dữ liệu là '.... của các hệ ứng dụng đối với sự thay đổi trong cấu trúc lưu trữ và chiến lược truy nhập dữ liệu'?", answers: {"A": "Nội dung thông tin", "B": "Phương thức truy nhập", "C": "Tính bất biến", "D": "Các chiến lược truy nhập"}, correct: "C" }
+            ],
+            "3":[
+                { id: "q1", text: "Chọn một khẳng định sau đây là đúng nhất?", answers: {"A": "Sự không nhất quán dữ liệu trong lưu trữ làm cho dữ liệu mất đi tính toàn vẹn", "B": "Tính toàn vẹn dữ liệu đảm bảo dữ liệu luôn luôn đúng", "C": "Tính nhất quán dữ liệu đảm bảo cho sự cập nhật, bổ sung dễ dàng", "D": "Tổ chức lưu trữ theo lý thuyết cơ sở dữ liệu, các thuộc tính có thể lặp lại"}, correct: "A" },
+                { id: "q2", text: "Hãy chọn từ/cụm từ tương ứng để hoàn thiện khẳng định sau: Toàn vẹn dữ liệu nghĩa là?", answers: {"A": "Có thể thực hiện các chiến lược truy nhập dữ liệu", "B": "Dữ liệu trong CSDL luôn luôn chính xác tại mọi thời điểm", "C": "Có thể tìm kiếm tại mọi thời điểm", "D": "Đảm bảo tính độc lập dữ liệu tại mọi thời điểm"}, correct: "B" },
+                { id: "q3", text: "Hãy chọn từ/cụm từ tương ứng để hoàn thiện khẳng định sau: Hình thức thông dụng nhất để nhận biết người sử dụng là mật khẩu ...?", answers: {"A": "Đảm bảo toàn vẹn dữ liệu", "B": "Chỉ có hệ thống và người sử dụng biết", "C": "Mới được phép truy nhập CSDL", "D": "Và các quy tắc bảo vệ cơ sở dữ liệu"}, correct: "B" },
+                { id: "q4", text: "Người sử dụng có thể truy nhập?", answers: {"A": "Một phần cơ sở dữ liệu", "B": "Phụ thuộc vào quyền truy nhập", "C": "Toàn bộ cơ sở dữ liệu", "D": "Hạn chế"}, correct: "B" },
+                { id: "q5", text: "Mô hình dữ liệu nào có khả năng hạn chế sự dư thừa dữ liệu tốt hơn?", answers: {"A": "Tất cả các loại mô hình dữ liệu", "B": "Mô hình dữ liệu hướng đối tượng", "C": "Mô hình cơ sở dữ liệu phân cấp", "D": "Mô hình cơ sở dữ liệu phân tán"}, correct: "B" },
+                { id: "q6", text: "Mô hình dữ liệu nào không chấp nhận mối quan hệ nhiều - nhiều?", answers: {"A": "Mô hình dữ liệu mạng", "B": "Cơ sở dữ liệu phân cấp", "C": "Tất cả các mô hình dữ liệu", "D": "Cơ sở dữ liệu phân tán"}, correct: "A" },
+                { id: "q7", text: "Chọn một khẳng định nào sau đây là đúng nhất?", answers: {"A": "Sự không nhất quán dữ liệu trong lưu trữ làm cho dữ liệu mất đi tính toàn vẹn", "B": "Tổ chức lưu trữ theo lý thuyết cơ sở dữ liệu, các thuộc tính có thể lặp lại", "C": "Tính toàn vẹn dữ liệu đảm bảo dữ liệu luôn luôn đúng", "D": "Tính nhất quán dữ liệu đảm bảo cho sự cập nhật, bổ sung dễ dàng"}, correct: "A" },
+                { id: "q8", text: "Chọn một khẳng định nào sau đây là đúng nhất khi nói về các bước triển khai mô hình thực thể quan hệ?", answers: {"A": "Xác định nội dung, yêu cầu của các thực thể", "B": "Phân tích yêu cầu, xác định các thực thể và các mối liên kết, tích hợp yêu cầu, chuyển đổi về các quan hệ, chuẩn hóa dữ liệu và thiết kế vật lý", "C": "Mô tả thông tin về các đối tượng và xác định mối quan hệ giữa các đối tượng cần thiết kế", "D": "Phân tích yêu cầu, xác định các thực thể, chuẩn hóa dữ liệu và thiết kế vật lý"}, correct: "B" },
+                { id: "q9", text: "Hãy chọn từ/cụm từ tương ứng để hoàn thiện khẳng định sau: Tổ chức lưu trữ dữ liệu theo lý thuyết cơ sở dữ liệu có thể tránh được sự không nhất quán trong lưu trữ dữ liệu và bảo đảm được .... của dữ liệu?", answers: {"A": "Tính toàn vẹn", "B": "Tính độc lập dữ liệu", "C": "An toàn", "D": "Quyền truy nhập cơ sở dữ liệu"}, correct: "B" }
+            ],
+                    //Chương 2
+            "4":[
+                { id: "q1", text: "Trường khóa chính là trường?", answers: {"A": "Single Key", "B": "Unique Key", "C": "First Key", "D": "Primary Key"}, correct: "D" },
+                { id: "q2", text: "Thực thể là?", answers: {"A": "Các đối tượng dữ liệu", "B": "Các quan hệ", "C": "Các mối liên kết giữa các đối tượng", "D": "Các đối tượng và mối liên kết giữa các đối tượng"}, correct: "A" },
+                { id: "q3", text: "Hãy chọn từ/ cụm từ tương ứng để hoàn thiện khẳng định sau: Phép chiếu quan hệ. tức là từ quan hệ nguồn...?", answers: {"A": "Bỏ đi một số bộ thỏa mãn biểu thức logic", "B": "Bỏ đi một số bộ thỏa mãn biểu thức logic", "C": "Bỏ đi một số bộ", "D": "Bỏ đi một số thuộc tính"}, correct: "D" },
+                { id: "q4", text: "Hãy chọn từ/cụm từ tương ứng để hoàn thiện khẳng định sau: Hợp các quan hệ khả hợp trên cùng tập các thuộc tính U là một quan hệ trên U, các bộ là .........., bỏ đi các bộ trùng nhau, chỉ giữ lại những bộ đại diện?", answers: {"A": "Các bộ của các quan hệ nguồn thỏa điều kiện hợp", "B": "Các bộ của các quan hệ nguồn", "C": "Các bộ của các quan hệ nguồn được tách không tổn thất thông tin", "D": "Các bộ có mặt trong các quan hệ nguồn"}, correct: "C" },
+                { id: "q5", text: "Hãy chọn từ/cụm từ tương ứng để hoàn thiện khẳng định sau: Giao của các quan hệ trên U cũng là một quan hệ trên U, các bộ của nó là các bộ ....?", answers: {"A": "Có mặt trong các quan hệ nguồn", "B": "Của các quan hệ nguồn thỏa tận từ xác định", "C": "Có mặt ở tất cả các quan hệ nguồn", "D": "Các quan hệ nguồn được tách không tổn thất thông tin"}, correct: "C" },
+                { id: "q6", text: "Hãy chọn từ/cụm từ tương ứng để hoàn thiện khẳng định sau: Tích Đề các quan hệ là một quan hệ, với tập các thuộc tính là ......., các bộ bao gồm các bộ quan hệ nguồn nối tiếp theo thứ tự phép nhân?", answers: {"A": "Hợp tập các thuộc tính của các quan hệ nguồn", "B": "Thuộc tính có mặt trong quan hệ đầu tiên phép nhân", "C": "Giao tập các thuộc tính của các quan hệ nguồn", "D": "Tập các thuộc tính của các quan hệ tách"}, correct: "A" },
+                { id: "q7", text: "Hãy chọn từ/cụm từ tương ứng để hoàn thiện khẳng định sau: Cơ sở dữ liệu quan hệ được biểu diễn ...., các cột là thuộc tính và các hàng là tập n giá trị của thực thể, đối tượng?", answers: {"A": "Dưới dạng các File dữ liệu", "B": "Cấu trúc hình cây", "C": "Dưới dạng các bảng", "D": "Cấu trúc hình mạng"}, correct: "C" },
+                { id: "q8", text: "Chọn một khẳng định nào sau đây là đúng nhất khi nói về phép giao?", answers: {"A": "Thuộc tính của quan hệ giao là giao các thuộc tính của các quan hệ nguồn", "B": "Giao của các quan hệ là một quan hệ", "C": "Các bộ của quan hệ giao là giao các bộ của các quan hệ nguồn", "D": "Giao của các quan hệ khả hợp là một quan hệ khả hợp"}, correct: "D" },
+                { id: "q9", text: "Chọn một khẳng định nào sau đây là đúng nhất khi nói về phép trừ?", answers: {"A": "Hiệu của các quan hệ cũng là quan hệ", "B": "Các bộ quan hệ kết quả là các bộ của các quan hệ nguồn", "C": "Các quan hệ tham gia phép trừ không cần phải khả hợp", "D": "Hiệu của các quan hệ khả hợp cũng là quan hệ khả hợp"}, correct: "D" },
+                { id: "q10", text: "Cho 2 quan hệ r(A,B) = {(a1, b1), (a2, b1), (a1, b2)} và s(A,B) = {(a2, b1), (a2, b2)}. Khi đó phép hợp r ∪ s sẽ có kết quả?", answers: {"A": "{(a2, b1)}", "B": "{(a1, b1), (a2, b1), (a1, b2), (a2, b2)}", "C": "{(a1, b1), (a1, b2), (a2, b2)}", "D": "none"}, correct: "B" },
+                { id: "q11", text: "Cho 2 quan hệ r(A,B) = {(a1, b1), (a2, b1), (a1, b2)} và s(A,B) = {(a2, b1), (a2, b2)}. Khi đó phép giao r ∩ s sẽ có kết quả?", answers: {"A": "{(a2, b1)}", "B": "{(a1, b1), (a2, b1), (a1, b2), (a2, b2)}", "C": "{(a1, b1), (a1, b2), (a2, b2)}", "D": "{(a1, b1), (a1, b2)}"}, correct: "A" },
+                { id: "q12", text: "Cho 2 quan hệ r(A,B) = {(a1, b1), (a2, b1), (a1, b2)} và s(A,B) = {(a2, b1), (a2, b2)}. Khi đó phép trừ r - s sẽ có kết quả?", answers: {"A": "{(a1, b1)}", "B": "{(a1, b1), (a2, b1), (a1, b2), (a2, b2)}", "C": "{(a1, b1), (a1, b2), (a2, b2)}", "D": "{(a1, b1), (a1, b2)}"}, correct: "D" },
+                { id: "q13", text: "Cho 2 quan hệ r(A,B) = {(a1, b1), (a2, b1), (a1, b2)} và s(A,B) = {(a2, b1), (a2, b2)}. Khi đó phép trừ s - r sẽ có kết quả?", answers: {"A": "{(a2, b2)}", "B": "{(a1, b1), (a2, b1), (a1, b2), (a2, b2)}", "C": "{(a1, b1), (a1, b2), (a2, b2)}", "D": "{(a2, b1)}"}, correct: "A" }
+
+            ],
+            "5": [
+                { id: "q1", text: "Tiêu chí nào sau đây thường được dùng để chọn khoá chính?", answers: {"A": "Khoá có ít thuộc tính nhất", "B": "Không chứa các thuộc tính thay đổi theo thời gian", "C": "Khoá bất kì", "D": "Chỉ là khoá có một thuộc tính"}, correct: "A" },
+                { id: "q2", text: "Liên kết giữa các bảng được dựa trên:", answers: {"A": "Thuộc tính khoá", "B": "Các thuộc tính trùng tên nhau giữa các bảng", "C": "Ý định của người quản trị hệ CSDL", "D": "Ý định ghép các bảng thành một bảng có nhiều thuộc tính hơn"}, correct: "A" },
+                { id: "q3", text: "Trong mô hình cơ sở dữ liệu quan hệ?", answers: {"A": "Thứ tự của các cột là quan trọng", "B": "Thứ tự của các cột là không quan trọng", "C": "Thứ tự của các hàng là quan trọng", "D": "Thứ tự của các hàng là không quan trọng"}, correct: "B" },
+                { id: "q4", text: "Dữ liệu trong mô hình quan hệ:", answers: {"A": "Được biểu diễn theo cấu trúc hình cây", "B": "Được biểu diễn một cách duy nhất", "C": "Được biểu diễn theo cấu trúc mô hình mạng", "D": "Được biểu diễn nhiều kiểu khác nhau"}, correct: "B" },
+                { id: "q5", text: "Mô hình thực thể - quan hệ cơ bản bao gồm các lớp đối tượng:", answers: {"A": "Thực thể và thuộc tính", "B": "Môi trường và ranh giới môi trường", "C": "Thực thể, mối quan hệ và thuộc tính", "D": "Các mối quan hệ"}, correct: "C" },
+                { id: "q6", text: "Hãy chọn từ/cụm từ tương ứng để hoàn thiện khẳng định sau: Trong biểu thức quan hệ các toán hạng là...", answers: {"A": "Các phần tử", "B": "Các phụ thuộc hàm", "C": "Các thuộc tính", "D": "Các quan hệ trong một CSDL"}, correct: "D" },
+                { id: "q7", text: "X là một tập con các thuộc tính của U khi và chỉ khi:", answers: {"A": "Với mọi thuộc tính X cũng là thuộc tính của U", "B": "Với mọi thuộc tính của U", "C": "Với mọi thuộc tính của U, cũng là thuộc tính của X", "D": "Tất cả đều sai"}, correct: "A" },
+                                    // các câu cần chữ nửa dưới (8, 9, 10, 11, 12)
+                { id: "q8", text: "Cho quan hệ: r(A,B) = {(a1, b1), (a2, b1), (a1, b2)}, phép chọn σ<sub>A-a1</sub>(r) sẽ có kết quả nào", answers: {"A": "{(a2, b1)}", "B": "{(a1, b1), (a1, b2)}", "C": "{(a1, b1)}", "D": "{(a1, b2)}"}, correct: "B" },
+                { id: "q9", text: "Cho quan hệ: r(A, B) = {(a1, b1), (a2, b1), (a1, b2)}, phép chọn σ<sub>A-a1^B-b2</sub>(r) sẽ có kết quả nào;", answers: {"A": "{(a1, b2)}", "B": "{(a1, b1), (a1, b2)}", "C": "{(a1, b1)}", "D": "{(a2, b1)}"}, correct: "A" },
+                { id: "q10", text: "Cho quan hệ: r(A, B) = {(a1, b1), (a2, b1), (a1, b2)}, phép chọn σ<sub>A-a1<sub>v</sub>B-b2</sub>(r) sẽ có kết quả nào;", answers: {"A": "{(a1, b1), (a2, b1), (a1, b2)}", "B": "{(a1, b1), (a1, b2)}", "C": "{(a1, b1)}", "D": "{(a2, b1)}"}, correct: "A" },
+                { id: "q11", text: "Cho quan hệ r(A, B, C) = {(a1, b1, c1), (a2, b1, c2), (a1, b2, c1), (a1, b2, c2)}, tập thuộc tính X = {A, B}. Phép chiếu Π<sub>X</sub>(r) = (A, B) sẽ có kết quả là", answers: {"A": "{(a1, b1), (a2, b1), (a1, b2)}", "B": "{(a1, b1), (a2, b1), (a1, b2), (a1, b2)}", "C": "{(a1, b1), (a2, b1)}", "D": "{(a1, b1)}"}, correct: "A" },
+                { id: "q12", text: "Cho quan hệ r(A, B, C) = {(a1, b1, c1), (a2, b1, c2), (a1, b2, c1), (a1, b2, c2)}, tập thuộc tính X = {A, C}. Phép chiếu Π<sub>X</sub>(r) = (A, C) sẽ có kết quả là", answers: {"A": "{(a1, c1), (a2, c2), (a1, c2)}", "B": "{(a1, c1), (a2, c2), (a1, b1), (a1, c2)}", "C": "{(a1, c1), (a2, c2)}", "D": "{(a1, c1)}"}, correct: "A" }
+            ],
+            "6": [
+                { id: "q1", text: "Khi thực hiện các phép lưu trữ trên quan hệ:", answers: {"A": "Dị thường thông tin, không bảo đảm được tính toàn vẹn dữ liệu", "B": "Không dị thường thông tin, bảo đảm được tính toàn vẹn dữ liệu", "C": "Dị thường thông tin, không bảo đảm được việc thực hiện truy vấn dữ liệu", "D": "Không dị thường thông tin, là bảo đảm được tính độc lập dữ liệu"}, correct: "B" },
+                { id: "q2", text: "Cho hai quan hệ; r(A, B, C) = {(a1, b1, 1), (a2, b1, 2), (a1, b2, 1), (a1, b2, 3)}, và s(D, E, G) = {(1, d1, e1), (2, d1, e1)}. Phép kết nối r(A, B, C)*s(D, E, G) = (A, B, C, D, E, G) sẽ có kết quả:", answers: {"A": "{(a1, b1, 1, 1, d1, e1), (a1, b2, 1, 1, d1, e1), (a2, b1, 2, 2, d1, e1)}", "B": "{(a2, b1, 2, 2, d1, e1)}", "C": "{(a1, b1, 1, 1, d1, e1), (a1, b2, 1, 1, d1, e1)}", "D": "{(a1, b1, 1, 1, d1, e1), (a2, b1, 2, 2, d1, e1)}"}, correct: "A" },
+                                    // các câu cần chữ nửa dưới (3, 4, 5, 6, 7)
+                { id: "q3", text: "Cho hai quan hệ: r(A, B, C) = {(a1, b1, c1), (a2, b1, c1)} và s(C, D, E) = {(c1, d1, e1), (c2, d1, e1), (c1, d2, e2)}. Phép tính quan hệ σ<sub>D-d1</sub>r * s (A, B, C, D, E) có kết quả là:", answers: {"A": "{(a1, b1, c1, d1, e1), (a2, b1, c1, d1, e1)}", "B": "{(a1, b1, c1, d1, e1)}", "C": "{(a2, b1, c1, d1, e1)}", "D": "{(a1, b1, c1, d2, e2)}"}, correct: "A" },
+                { id: "q4", text: "Cho hai quan hệ: r(A, B, C) = {(a1, b1, c1), (a2, b1, c1)} và s(C, D, E) = {(c1, d1, e1), (c2, d1, e1), (c1, d2, e2)}. Phép tính quan hệ σ<sub>D=d1 ∧ A=a2</sub>r * s (A, B, C, D, E) có kết quả là:", answers: {"A": "{(a2, b1, c1, d1, e1)}", "B": "{(a1, b1, c1, d1, e1)}", "C": "{(a1, b1, c1, d1, e1), (a2, b1, c1, d1, e1)}", "D": "{(a1, b1, c1, d2, e2)}"}, correct: "A" },
+                { id: "q5", text: "Cho hai quan hệ: r(A, B, C) = {(a1, b1, c1), (a2, b1, c1)} và s(C, D, E) = {(c1, d1, e1), (c2, d1, e1), (c1, d2, e2)}. Phép tính quan hệ σ<sub>A=a2 ∨ E=e2</sub>r * s (A, B, C, D, E) có kết quả là", answers: {"A": "{(a1, b1, c1, d2, e2), (a2, b1, c1, d1, e1), (a2, b1, c1, d2, e2)}", "B": "{(a1, b1, c1, d2, e2), (a2, b1, c1, d1, e1)}", "C": "{(a2, b1, c1, d1, e1), (a2, b1, c1, d2, e2)}", "D": "{(a1, b1, c1, d2, e2), (a2, b1, c1, d2, e2)}"}, correct: "A" },
+                { id: "q6", text: "Cho hai quan hệ: r(A, B, C) = {(a1, b1, c1), (a2, b1, c1)} và s(C, D, E) = {(c1, d1, e1), (c2, d1, e1), (c1, d2, e2)}. Phép tính quan hệ π<sub>BC </sub>r*s (A, B, C, D, E) có kết quả là", answers: {"A": "{(b1, c1)}", "B": "{(b1, c2)}", "C": "{(b1, c1), (b1, c2)}", "D": "Không có kết quả."}, correct: "A" },
+                { id: "q7", text: "Cho hai quan hệ: r(A, B, C) = {(a1, b1, c1), (a2, b1, c1)} và s(C, D, E) = {(c1, d1, e1), (c2, d1, e1), (c1, d2, e2)}. Phép tính quan hệ π<sub>AB</sub>r*s (A, B, C, D, E) có kết quả là", answers: {"A": "{(a1, b1), (a2, b1)}", "B": "{(a1, b2)}", "C": "{(b2, b1)}", "D": "Không có kết quả"}, correct: "A" },
+            ],
+                    //Chương 3
+            "7": [
+                { id: "q1", text: "Hệ tiên đề Armstrong cho các phụ thuộc hàm gồm các quy tắc:", answers: {"A": "Phản xạ, hợp và tách", "B": "Phản xạ, bắc cầu, hợp và tách", "C": "Phản xạ, gia tăng, hợp và tách", "D": "Phản xạ, gia tăng, bắc cầu"}, correct: "D" },
+                { id: "q2", text: "Quy tắc bắc cầu trong hệ tiên đề Armstrong:", answers: {"A": "Nếu A -> B và B -> C => A -> C", "B": "Nếu A -> B và B -> C => AC →> B", "C": "Nếu A -> B và B -> C → AB -> C", "D": "Nếu A -> B và B -> C => AC -> BC"}, correct: "A" },
+                { id: "q3", text: "Các thuộc tính khóa là :", answers: {"A": "Các thuộc tính không được chứa trong khóa", "B": "Các thuộc tính khoá", "C": "Các thuộc tính không khóa", "D": "Các thuộc tính được chứa trong khóa"}, correct: "D" },
+                { id: "q4", text: "Chọn một khẳng định nào sau đây là đúng nhất:", answers: {"A": "Chuẩn hóa dữ liệu dựa trên các khái niệm phụ thuộc hàm", "B": "Phụ thuộc hảm mô tả các phương pháp biểu diễn dữ liệu", "C": "Phụ thuộc hảm mô tả các ràng buộc trong cơ sở dữ liệu", "D": "Các phương pháp chuẩn hóa dữ liệu"}, correct: "A" },
+                { id: "q5", text: "Chọn một khẳng định nào sau đây là đúng nhất:", answers: {"A": "Số diện thoại -> Mã vùng là phụ thuộc phản xạ", "B": "Số điện thoại -> Họ tên thuê bao là phụ thuộc phản xạ", "C": "(Số thứ tự, Mã lớp) -> Mã lớp là phụ thuộc phản xạ", "D": "Số chứng minh thư -> Họ tên là phụ thuộc phân xạ"}, correct: "C" },
+                { id: "q6", text: "Chọn một khẳng định nào sau dây là đúng nhất khi nói về các phụ thuộc hàm gia tăng:", answers: {"A": "Có thể mở rộng về trái hoặc cả hai về phụ thuộc hàm cùng một thuộc tính", "B": "A →> B →> A -> BC", "C": "A -> B => AC →> B và A -> BC", "D": "Có thể mở rộng về trái, không mở rộng về phải"}, correct: "A" },
+                { id: "q7", text: "Chọn một khẳng định nào sau đây là đúng nhất khi nói về phụ thuộc bắc cầu :", answers: {"A": "Nếu A -> B và B -> C thi suy ra AC -> BC", "B": "Nếu A -> B và B -> C suy ra A -> C", "C": "Nếu một thuộc tính xác định thuộc tinh thứ hai, hoặc xác định thuộc tính thứ ba, khi đó thuộc tính thứ nhất xác định thuộc tính thứ 3", "D": "Nếu một thuộc tính xác định thuộc tính thứ hai thì nó xác định thuộc tính thứ ba"}, correct: "B" },
+                { id: "q8", text: "Chọn một khăng định nào sau dây là đúng nhất :", answers: {"A": "Thuộc tính về phải sẽ xác định các thành phần trong về trái", "B": "Thuộc tính về trái sẽ không xác định các thành phẩn trong về phải", "C": "Thuộc tính về trúi có mặt trong về phải", "D": "Thuộc tính về trái sẽ xác định các thành phần trong vế phải"}, correct: "D" },
+                { id: "q9", text: "Chọn một khẳng định nào sau đây là đúng nhất khi nói về tập tương đương:", answers: {"A": "Tập G là tập con của F", "B": "Các phụ thuộc của G là các phụ thuộc của F", "C": "Các phụ thuộc của F được suy dẫn logic từ G và các phụ thuộc của G được suy dẫn logic từ F", "D": "Các phụ thuộc của F cũng là các phụ thuộc của G và ngược lại"}, correct: "C" },
+                { id: "q10", text: "Chọn một khẳng dịnh nào sau đây là đúng nhất khi nói về khóa của lược đồ quan hệ:", answers: {"A": "Giá trị của mỗi thuộc tính có thể xác định duy nhất giá trị các thuộc tính khác", "B": "Khóa gồm nhiều thuộc tinh có khả năng biểu diễn các thuộc khác", "C": "Giá trị của một hay nhiều thuộc tinh có thể xác định duy nhất giá trị các thuộc tính khác kể cả giá trị null", "D": "Khoá là một thuộc tính hay một tập các thuộc tính có khả năng biểu diễn duy nhất các thuộc tính còn lại"}, correct: "D" },
+                { id: "q11", text: "Chọn một khẳng định nào sau đây là đúng nhất:", answers: {"A": "Khi thực hiện phép tách, quan hệ gốc bị tổn thất", "B": "Khi thực hiện phép tách, quan hệ gốc có thể bị tổn thất", "C": "Khi thực hiện phép tách, quan hệ gốc luôn luôn tồn thất", "D": "Khi thực hiện phép tách, quan hệ gốc không tổn thất"}, correct: "B" },
+                { id: "q12", text: "Chọn một khẳng định nào sau đây là đúng nhất:", answers: {"A": "Chuẩn hoá là quả trình loại bỏ dị thường thông tin và không tổn thất thông tin", "B": "Chuẩn hoá quá trình tách dữ liệu không làm tổn thất thông tin", "C": "Chuân hóa là quá trình tách lược đồ quan hệ về các lược đồ quan hệ chuẩn cao và không làm tổn thất thông tin", "D": "Chuẩn hoá là quá trình loại bỏ dị thường thông tin"}, correct: "C" },
+                { id: "q13", text: "Chọn một khẳng định nào sau dây là đúng nhất khi nói về tập con thuộc tính", answers: {"A": "X là con Y khi và chỉ khi các thuộc tính của Y là thuộc tính của X", "B": "Các thuộc tinh của X cũng là thuộc tinh của Y, và ngược lại", "C": "X là con con Y khi và chỉ khi EA €X, suy ra A € Y", "D": "X là con của Y khi và chỉ khi VA € X, suy ra A €Y"}, correct: "D" },
+                { id: "q14", text: "Chọn một khẳng định nào sau đây là đúng nhất khi nói về thuộc tính dư thừa", answers: {"A": "AIA2 → B, Al dư thừa khi A2 không xác định B", "B": "A1A2 → B, Al dư thừa khi A2 → B phụ thuộc đầy đủ", "C": "AIA2 → B, Al dư thừa khi A2 → B", "D": "AIA2 → B, Al dư thừa khi A1A2 → B phụ thuộc đẩy đủ"}, correct: "C" },
+                // các câu cần chữ nửa dưới (15)
+                { id: "q15", text: "Hãy chọn từ/ cụm từ tương ứng để hoàn thiện khẳng định sau: φ[Ω<sub>1</sub>, Ω<sub>2</sub>,..., Ω<sub>φ</sub>] là một phép tách, nghĩa là...", answers: {"A": "Ω ⊂ Ω<sub>1</sub> ∪...∪ Ωp", "B": "Ω = Ω<sub>1</sub>∪...∪Ωp", "C": "Ω ⊆ Ω<sub>1</sub> ∪...∪ Ωp", "D": "Ω ⊇ Ω<sub>1</sub> ∪...∪ Ωp"}, correct: "B" },
+            ],
+            "8": [
+                { id: "q1", text: "Quy tắc gia tăng trong hệ tiên đề Armstrong :", answers: {"A": "Nếu A -> B => B →> A ", "B": "Nếu A -> B => A -> BC", "C": "Nếu A -> B => BC -> A", "D": "Nếu A -> B => AC -> B"}, correct: "D" },
+                { id: "q2", text: "Nếu A -> BC suy ra:", answers: {"A": "AC -> B và A -> CC", "B": "A -> C", "C": "A →> B và A -> C", "D": "A -> B"}, correct: "C" },
+                { id: "q3", text: "Nếu A -> B và A -> C thì suy ra:", answers: {"A": "AA -> C", "B": "A -> AB", "C": "A -> BC", "D": "AB -> BC"}, correct: "C" },
+                { id: "q4", text: "Giá trị các thành phần của khóa quy định:", answers: {"A": "Có thể nhận giá trị nuil", "B": "Không thể nhận giá trị null hay các giá trị không xác định", "C": "Có thể nhận giá trị null hay các giá trị không xác định", "D": "Không thể nhận giá trị null nhưng có thể nhận các giá trị không xúc định"}, correct: "B" },
+                { id: "q5", text: "Chọn một khẳng định nào sau đây là đúng nhất :", answers: {"A": "A -> B và BC-> Z →> AC →> Z", "B": "AC -> B và B -> Z => AC -> Z ", "C": "A -> B và B -> Z →> AC -> Z", "D": "A -> BC và BC -> Z →> AC -> Z"}, correct: "B" },
+                { id: "q6", text: "Chọn một khẳng dịnh nào sau dây là dúng nhất :", answers: {"A": "Tên thuê bao -> Số điện thoại thuê bao", "B": "A -> B và A -> C => A →> BC", "C": "A -> B và A -> C => B -> BC", "D": "AA →> AB và AA →> C, suy ra A -> BC"}, correct: "B" },
+                { id: "q7", text: "Chọn một khẳng định nào sau đây là đúng nhất khi nồi về các phụ thuộc đầy đủ:", answers: {"A": "Các thuộc tính về phải không xác dịnh về trái", "B": "Các thuộc tính vế trái không xác định các thuộc tính thuộc về phải", "C": "Các thuộc tính vế trái xác định về phải", "D": "Các thuộc tính về trái khi tách riêng sẽ không xác định được vố phải (tức luôn phải đứng cùng nhau)"}, correct: "D" },
+                { id: "q8", text: "Chọn một khẳng định sau đây là đúng nhất khi tách quan hệ:", answers: {"A": "Ðảm bảo tính toàn yẹn dữ liệu", "B": "Ðảm bảo tinh độc lập dữ liệu", "C": "Làm tổn thất thông tin", "D": "Không làm tổn thất thông tin"}, correct: "A" },
+                { id: "q9", text: "U:-(A,B, C,D, E, F), phép tách U1:= (A, B, D, E), U3:= (B, C, E, F), U2:= (A, C, D, F) và F:= (A > B, F -> E).", answers: {"A": "Không tồn tại hàng chứa các giá trị a ", "B": "Tồn tại ít nhất 1 hàng chứa các giá trị a", "C": "Phép tách không tổn thất thông tin", "D": "Phép tách tổn thất thông tin"}, correct: "C" },
+                { id: "q10", text: "Chọn một khẳng định nảo sau đây là đúng nhất :", answers: {"A": "Quan hệ gồm: Mã báo, tên báo, giá báo và mã khách đặt mua là quan hệ 2NF", "B": "Quan hệ gồm: Mã nhân viên, tên, địa chỉ là quan hệ 2NF", "C": "Quan hệ gồm: Mã hóa dơn, mã khách, mã mặt hàng là quan hệ 2NF", "D": "Quan hệ gồm: Mã khách, tên khách và mã báo, tên báo là quan hệ 2NF"}, correct: "B" },
+                { id: "q11", text: "Phát biểu nào đúng nhất khi nói về quan hệ 2NF", answers: {"A": "Trong quan hệ 2NF, cẩm tất cả các phụ thuộc không dầy đủ vảo khoá", "B": "Trong quan hệ 2NF, cẩm tất cả các phụ thuộc đầy đủ vào khóa", "C": "Trong quan hệ 2NF, các thuộc tính khóa phụ thuộc vào các tập con của khoa", "D": "Trong quan hệ 2NF, các thuộc tính không khóá phụ thuộc vào khoá"}, correct: "A" },
+                { id: "q12", text: "Chọn một khẳng dịnh nảo sau đây là đúng nhất :", answers: {"A": "Tách một quan hệ không 3NF thành nhiều quan hệ 3NF, tổn thất thông tin", "B": "Từ một quan hệ 2NF tách thành nhiều quan hệ 3NF", "C": "Tách một quan hệ thành nhiều quan hệ 3NF, có tổn thất thông tin", "D": "Tách một quan hệ tách thành nhiều quan hệ 3NF, không làm mất thông tin"}, correct: "D" },
+                { id: "q13", text: "Hãy chọn từ/cụm từ tương ứng để hoàn thiện khẳng định sau: Bao đóng tập các phụ thuộc hàm gồm các phụ thuộc...", answers: {"A": "Bắc cầu được suy dẫn logic", "B": "Ðược suy dẫn bằng dịnh nghĩa", "C": "Ðược suy dẫn bằng cách áp dụng liên tiếp các hệ tiên đề Armstrong", "D": "Ðầy đủ. được suy dẫn logic"}, correct: "C" },
+                { id: "q14", text: "Hãy chọn từ/cụm từ tương ứng đề hoàn thiện khảng định sau: Từ một siêu khóa cho trước, có thể...", answers: {"A": "Xác định một khóa trong nó", "B": "Xác định một siêu khóa trong nó", "C": "Xác định một nhóm các thuộc tính", "D": "Xác định một thuộc tính"}, correct: "A" },
+                { id: "q15", text: "Hãy chọn từ/cụm từ tương ứng để hoàn thiện khẳng định sau:Trong quá trình chuẩn hóá dữ liệu, cần thiết phải thực hiện các phép tách quan hệ về các quan hệ có dạng chuẩn cao", answers: {"A": "Ðảm bảo tính toàn vẹn dữ liệu", "B": "Và biểu diễn thông tin là duy nhất", "C": "Và không tổn thất thông tin", "D": "Không làm mất đi tính độc lập dữ liệu"}, correct: "C" }
+            ],
+            "9": [
+                { id: "q1", text: "FF (A →> B, C -> X, BX → Z), khi đó:", answers: {"A": "AB -> C Thuộc F+", "B": "A -> Z Thuộc F+", "C": "CB -> Z Thuộc F+", "D": "AC -> Z Thuộc F+"}, correct: "D" },
+                { id: "q2", text: "Phụ thuộc nào sau đây là phụ thuộc đầy đủ:", answers: {"A": "(Mã nhân viên, tên nhân viên) xác định đơn vị công tắc", "B": "(Số thứ tự, đơn vị) xác định uôs thứ tự trong bảng lương", "C": "Mã nhân viên xác định quá trình công tác nhân viên đỏ", "D": "Số thứ tự xác định tiền lương của một nhân viên"}, correct: "C" },
+                { id: "q3", text: "Chọn một khẳng định nào sau đây là dúng nhất với F= (X ->2,XY-> WP,XY> ZWQ, XZ -> R)", answers: {"A": "Về trái của X -> Z có chứa thuộc tính dư thừa", "B": "Về trái của XY -> WP có chứa thuộc tính dư thừa", "C": "Về trái của XZ -> R có chứa thuộc tính dư thừa", "D": "Vế trái của XY -> WP có chứa thuộc tính dư thừa"}, correct: "C" },
+                { id: "q4", text: "Chọn một khẳng định nào sau đây là đúng nhất:", answers: {"A": "Phụ thuộc có về trái dư thừa là phụ thuộc bắc cầu", "B": "Phụ thuộc dư thừa có thể là phụ thuộc có về trái dư thừa", "C": "Phụ thuộc có về trải dư thừa là phụ thuộc dầy đù ", "D": "Phụ thuộc dư thừa là phụ thuộc có về trái dư thửa"}, correct: "B" },
+                { id: "q5", text: "Chọn một khẳng định nào sau đây là đúng nhất :", answers: {"A": "X là khóa nếu: X+ = U và (X - A)+ = U", "B": "Các thuộc tính không khóá phụ thuộc đầy đủ vào khóa", "C": "Mỗi một giá trị của khóa xác định các giá trị của các thuộc tính không khóa", "D": "Giá trị các khóa có thể trùng nhau"}, correct: "B" },
+                { id: "q6", text: "E:=(AB →> C,D -> EG,C-> A,BE -> C, BC -> D, CG -> BD,ACD -> B, CE - AG)", answers: {"A": "EB, CE, BC không là khóa của lược đồ quan hệ", "B": "EC, CB, BC khóa của lược đồ quan hệ", "C": " AB, CG, CD không là khóa của lược đồ quan hệ", "D": "AB, CG, CD khóa của lược đồ quan hệ"}, correct: "D" },
+                { id: "q7", text: "U=(A, B, C, D, E, G ), F = (B -> C, C -> B, A →> GD), khóa quan hộ là:", answers: {"A": "ACE", "B": "ABC", "C": "AC", "D": "AB"}, correct: "A" },
+                { id: "q8", text: "Phụ thuộc nảo sau đây là phụ thuộc dầy đủ?", answers: {"A": "(Số thứ tự, mã lớp) => Họ tên sinh viên", "B": "(Mã báo, mã khách hàng) ", "C": "(Số chứng minh thư, mã nhân viên) => Quá trình công tác ", "D": "(Số hóa đơn, mã khách hàng) => Họ tên khách hàng"}, correct: "A" },
+                { id: "q9", text: "Cho U= (A, B, C) và F = (A > C, A -> B). Phát biểu nào là đúng nhất?", answers: {"A": "Không tồn tại các thuộc tinh không khóa", "B": "(A, C), (B, C) là khóa của quan hệ trên", "C": "Quan hệ trên có dạng chuẩn là 3NF", "D": "Tồn tại một thuộc tính không khóa"}, correct: "C" },
+                { id: "q10", text: "Xét quan hệ U = (A, B, C, D, E, G, H) và F = (C -> AB, D -> E, B -> G)", answers: {"A": "Khoa quan hệ là (B, C, A)", "B": "Quan hệ có dạng chuẩn 3NF", "C": "Khóa quan hệ là (H, C, D)", "D": "Tất cả đều sai"}, correct: "C" },
+                { id: "q11", text: "", answers: {"A": "A → D eF<sup>+/<sup> và B → A eF<sup>+/<sup>", "B": "A → AD eF<sup>+/<sup> và A →D eF", "C": "A là con ABCD và A → AD eF<sup>+/<sup>", "D": "A → AD eF<sup>+/<sup> và C → D eF<sup>+/<sup>"}, correct: "B" }
+            ],
+                    //Chương 4
+                    //dễ
+            "10": [
+                { id: "q1", text: "Cần thiết phải chuẩn hóa dữ liệu vì:", answers: {"A": "Giá trị khóa nhận giá trị null hay giá trị không xác định", "B": "Khi thực hiện các phép lữu trữ trên các quan hệ chưa được chuẩn hóa thường xuất hiệu các dị thường thông", "C": "Khi thực hiện các phép tách - kết nối tự nhien các quan hệ", "D": "Khi thực hiện các phép tìm kiếm, xuất hiện các dị thường thông tin"}, correct: "B" },
+                { id: "q2", text: "Chọn một khẳng định nào sau đây là đúng nhất?", answers: {"A": "Khi thực hiện phép tách, quan hệ gốc không tổn thất", "B": "Khi thực hiện phép tách, quan hệ gốc bị tổn thất", "C": "Khi thực hiện phép tách, quan hệ gốc luôn luôn tổn thất", "D": "Khi thực hiện phép tách, quan hệ gốc có thể tổn thất hoặc không tổn thất"}, correct: "A" },
+                { id: "q3", text: "Quan hệ R được gọi là dạng chuẩn 1NF, khi cà chỉ khi:", answers: {"A": "Một thuộc tính có nhiều giá trị khác nhau", "B": "Các thuộc tính chỉ chứa các giá trị nguyên tố", "C": "Một quan hệ có nhiều hàng", "D": "Một quan hệ có nhiều cột"}, correct: "B" },
+                { id: "q4", text: "Một quan hệ R thuộc dạng chuẩn 2NF nếu có ở dạng 1NF và:", answers: {"A": "Mỗi thuộc tính không khóa phụ thuộc hàm đầy đủ vào khóa chính", "B": "Mỗi thuộc tính không khóa không phụ thuộc hàm đầy đủ vào khóa chính", "C": "Có tồn tại thuộc tính không khóa xác định hàm thuộc tính khóa chính", "D": "Mỗi thuộc tính không khóa hụ thuộc hàm đầy đủ vào khóa chính và tồn tại thuộc khóa chính phụ thuộc hàm vào thuộc tính không khóa"}, correct: "A" },
+                { id: "q5", text: "Một quan hệ R thuộc dạng chuẩn 3NF nếu nó ở dạng 2NF và:", answers: {"A": "Các thuộc tính không khóa không phụ thuộc hàm bắc cầu vào khóa chính", "B": "Các thuộc tính không khóa phụ thuộc hàm bắc cầu vào khóa chính", "C": "Các thuộc tính không khóa không phụ thuộc hàm bắc cầu vào khóa chính, và có tồn tại thuộc tính khóa chính phụ thuộc hàm vào thuộc tính không khóa", "D": "Tồn tại thuộc tính khóa chính phụ thuộc hàm vào thuộc tính không khóa"}, correct: "A" },
+                { id: "q6", text: "Cho một quan hệ R = {A, B, C} và tập phụ thuộc hàm F = {A -> BC}. Phép chuyển A -> BC thành -> B, A -> được thực hiện thông qua luật nào?", answers: {"A": "Luật bắc cầu", "B": "Luật tăng trưởng", "C": "Luật tách", "D": "Luật phản xạ"}, correct: "C" },
+                { id: "q7", text: "Cho một quan hệ R = {A, B, C} và tập phụ thuộc hàm F = {A -> B, A -> C}. Phép chuyển A -> B, A -> C thành A -> BC được thực hiện ", answers: {"A": "Luật bắc cầu", "B": "Luật tăng trưởng", "C": "Luật hợp", "D": "Luật phản xạ"}, correct: "C" },
+                { id: "q8", text: "Cho một quan hệ R = {A, B, C} và tập phụ thuộc hàm F = {A -> B, B -> C}. Xác định hàm A -> C được thực hiện thông qua luật nào?", answers: {"A": "Luật bắc cầu", "B": "Luật tăng trưởng", "C": "Luật tách", "D": "Luật hợp"}, correct: "A" },
+                { id: "q9", text: "Hệ tiên đề ban đầu của Armstrong bao gồm các luật nào?", answers: {"A": "Luật phản xạ, luật tăng trưởng, luật bắc cầu", "B": "Luật phản xạ, luật tăng trưởng, luật bắc cầu, luật tách", "C": "Luật tách, luật hợp, luật tựa bắc cầu", "D": "Luật phản xạ, luật bắc cầu, luật tách luật hợp"}, correct: "A" },
+                { id: "q10", text: "Các hệ tiên đề nào được suy ra từ hệ tiên đề của Armstrong?", answers: {"A": "Luật tách, luật hợp, luật tựa bắc cầu", "B": "Luật phản xạ, luật tăng trưởng, luật bắc cầu", "C": "Luật phản xạ, luật tăng trưởng, luật bắc cầu, luật tách", "D": "Luật phản xạ, luật bắc cầu, luật tách luật hợp"}, correct: "A" },
+                { id: "q11", text: "Cho một lược đồ quan hệ R = {A, B, C, D} và tập các phụ thuộc hàm F = {A -> B, AB -> C, B -> D}, khi đó kết luận nào sau đây là đúng", answers: {"A": "Khóa chính là A", "B": "Khóa chính là B", "C": "Khóa chính là AB", "D": "Khóa chính là AC"}, correct: "C" },
+                { id: "q12", text: "Cho một lược đồ quan hệ R = {A, B, C, D} và tập các phụ thuộc hàm sau F = {AB -> C, AC -> D}, thì khóa chính của R là", answers: {"A": "Khóa chính là AB", "B": "Khóa chính là AC", "C": "Khóa chính là A", "D": "Khóa chính là ABC"}, correct: "B" },
+                { id: "q13", text: "Cho lược đồ R = {A, B, C, D, E, F} và tập phụ thuộc hàm F = {AB -> C, AC -> D, CD -> EF}. Khi đó bao đóng của {AB} bao gồm các thuộc tính", answers: {"A": "{A, B, C, D, E, F}", "B": "{A, B, C}", "C": "{A, B, C, D}", "D": "{C, D, E, F}"}, correct: "A" },
+                { id: "q14", text: "Cho lược đồ R = {A, B, C, D, E, F} và tập phụ thuộc hàm F = {AB -> C, AC -> D, CD -> EF}. Khi đó bao đóng của {AC} bao gồm các thuộc tính", answers: {"A": "{A, C, D, E, F}", "B": "{A, B, C, E, E, F}", "C": "{A, B, C, D}", "D": "{A, C, E, F}"}, correct: "A" }
+
+            ],  //trung binh
+            "11": [
+                { id: "q1", text: "Một mô hình CSDL được xem là mô hình chuẩn hoá tốt, nếu:", answers: {"A": "Không xuất hiện dị thường thông tin", "B": "Đảm bảo tính độc lập dữ liệu", "C": "Mỗi một thuộc tính không khoá phụ thuộc hàm vào khoá", "D": "Mỗi một thuộc tính được biểu diễn trong dạng duy nhất"}, correct: "A" },
+                { id: "q2", text: "Quá trình chuẩn hóa dữ liệu là quá trình", answers: {"A": "Tách lược đồ quan hệ hạn chế thấp nhất tổn thất thông tin", "B": "Thực hiện các phép tìm kiếm dữ liệu", "C": "Chuyển đổi biểu diễn thông tin trong các dạng khác nhau", "D": "Tách lược đồ quan hệ không làm tổn thất thông tin"}, correct: "D" },
+                { id: "q3", text: "Phụ thuộc nào sau đây là phụ thuộc đầy đủ", answers: {"A": "(Số thứ tự, mã lớp) → Họ tên sinh viên", "B": " (Số chứng minh thư, mã nhân viên) → Quá trình công tác", "C": "(Số hóa đơn, mã khách hàng) → Họ tên khách hàng", "D": "(Mã báo, mã khách hàng) → Giá báo"}, correct: "A" },
+                { id: "q4", text: "Quan hệ gồm các thuộc tính mã số, họ tên và địa chỉ ở dạng chuẩn nào?", answers: {"A": "Dạng chuẩn 3NF", "B": "Dạng chuẩn 2NF, không là 3NF", "C": "Dạng chuẩn 1NF, không là 2NF", "D": "Dạng chuẩn 2NF"}, correct: "A" },
+                { id: "q5", text: "Quá trình chuyển quan hệ 1NF về 3NF là quá trình", answers: {"A": "Loại bỏ dị thường thông tin và không tổn thất thông tin", "B": "Loại bỏ dị thường thông tin và tổn thất thông tin", "C": "Loại bỏ dị thường thông tin", "D": "Không tổn thất thông tin"}, correct: "A" },
+                { id: "q6", text: "Xét quan hệ U = {A, B, C, D, E, G, H} và F = {C → AB, D → E, B → G}", answers: {"A": "Khóa quan hệ là {B, C, A}", "B": "Quan hệ có dạng chuẩn 3NF", "C": "Khóa quan hệ là {H, C, D}", "D": "Tất cả đều sai"}, correct: "C" },
+                { id: "q7", text: "Cho quan hệ R = {X, Y, Z, V} và F = {X → Y, XY → Z, XZ → V}. Khi đó khóa của lược đồ là", answers: {"A": "X", "B": "XZ", "C": "XY", "D": "XZ"}, correct: "A" },
+                { id: "q8", text: "Cho quan hệ R = {X, Y, Z, V} và F = {X → YZ, XZ → V}. Khi đó khóa của lược đồ là", answers: {"A": "XZ", "B": "XY", "C": "XV", "D": "YZ"}, correct: "A" },
+                { id: "q9", text: "Cho R = {A, B, C, D}, F = {AB → C, AC → D}. Để tách R thành các quan hệ dạng 3NF thì kết quả nào sau đây là đúng", answers: {"A": "R1 = {A, B, C}, R2 = {A, C, D}", "B": "R1 = {A, B}, R2 = {A, C, D}", "C": "R1 = {A, B, C}, R2 = {C, D}", "D": "R1 = {A, B, C}, R2 = {A, D}"}, correct: "A" },
+                { id: "q10", text: "Cho R = {A, B, C}, F = {AB → C, C → A}. Hỏi R thuộc dạng chuẩn nào", answers: {"A": "Dạng chuẩn 3NF", "B": "Dạng chuẩn 2NF", "C": "Dạng chuẩn BCNF", "D": "Dạng chuẩn 1NF"}, correct: "A" }
+            ],
+            "12": [
+                { id: "q1", text: "Một quan hệ dạng chuẩn INF có thể chuyển đổi về nhóm các quan hệ 3NF bằng cách:", answers: {"A": "Loại bỏ các phụ thuộc bắc cầu vào khoá", "B": "Loại bỏ các phụ thuộc khôngd đầy đủ vào khoá", "C": "Loại bỏ các phụ thuộc không đầy đủ vào khoá và bắc cầu vào khoá", "D": "Loại bỏ các phụ thuộc đầy đủ vào khoá và bắc cầu vào khoá"}, correct: "C" },
+                { id: "q2", text: "Cho một lược đồ quan R = {A, B, C, D} và tập các phụ thuộc hàm sau F = {A -> B, AB -> C, B -> D, C -> A}, nếu tách R thành R1 = {A, C} và R2 = {A, B, D} thì khoá chính của R2 là", answers: {"A": "Khoá chính của R2 là A", "B": "Khoá chính của R2 là AB", "C": "Khoá chính của R2 là B", "D": "Khoá chính của R2 là AD"}, correct: "A" },
+                { id: "q3", text: "Cho một lược đồ quan hệ R = {M, N, P, Q} và tập các phụ thuộc hàm sau F = {MN -> P, MP -> Q}. Khoá chính là MN, khi đó R thuộc dạng chuẩn nào?", answers: {"A": "Dạng chuẩn 2 NF", "B": "Dạng chuẩn 3NF", "C": "Dạng chuẩn 1NF", "D": "Dạng chuẩn BCNF"}, correct: "A" },
+                { id: "q4", text: "Cho một lược đồ quan R = {A, B, C, D} và tập các phụ thuộc hàm sau F = {A -> B, AB -> C, B -> D, C -> A}, nếu tách R thành R1 = {A, C} và R2 = {A, B, D} thì R1, R2 thuộc dạng chuẩn nào", answers: {"A": "Cả hai thu dạng BCNF", "B": "R1 thuộc dạng BCNF, R2 chỉ thuộc dạng 2NF chưa là 3NF và BCNF", "C": "Cả hai thuộc dạng 3NF chưa là BCNF", "D": "Cả hai chỉ thuộc dạng 2NF chưa là 3NF à BCNF"}, correct: "B" }
+                   
+            ],
+                    //Chương 5
+            "13": [
+                { id: "q1", text: "Các bước chính để tạo CSDL:", answers: {"A": "Tạo bảng; Chọn khoá chính cho bảng; Đặt tên bảng và lưu cấu trúc bảng; Tạo liên kết bảng", "B": "Tạo bảng; Chọn khoá chính cho bảng; Đặt tên bảng và lưu cấu trúc bảng", "C": "Tạo bảng; Chọn khoá chính cho bảng; Lưu cấu trúc bảng; Tạo liên kết bảng; Cập nhật và khai thác CSDL", "D": "Tạo bảng; Chọn khoá chính cho bảng; Đặt tên bảng; Tạo liên kết bảng"}, correct: "A" },
+                { id: "q2", text: "SQL là tên viết tắt của:", answers: {"A": "Structure Query Language", "B": "Query Structure Language", "C": "Structure Question Language", "D": "Structure Query Locator"}, correct: "A" },
+                { id: "q3", text: "Thứ tự đúng trong câu lệch SELECT là?", answers: {"A": "SELECT, FROM, WHERE, GROUP BY, HAVING, ORDER BY", "B": "SELECT, FROM, GROUP BY HAVING, ORDER BY", "C": "SELECT, FROM, GROUP BY HAVING, ORDER BY, WHERE", "D": "SELECT, FROM, GROUP BY HAVING, WHERE, ORDER BY"}, correct: "A" },
+                { id: "q4", text: "Mệnh đề nào được dùng để phân hoạch dữ liệu?", answers: {"A": "SELECT", "B": "FROM", "C": "WHERE", "D": "GROUP BY"}, correct: "D" },
+                { id: "q5", text: "Danh sách chọn được liệt kê sau mệnh đề nào trong SELECT - FROM - WHERE?", answers: {"A": "GROUP BY HAVING", "B": "WHERE", "C": "SELECT", "D": "FROM"}, correct: "C" },
+                { id: "q6", text: "Chọn một khẳng định nào sau đây là đúng nhất:", answers: {"A": "CREATE TABLE mô tả các thuộc tính", "B": "CREATE TABLE mô tả quan hệ và các thuộc tính", "C": "CREATE TABLE mô tả quan hệ", "D": "CREATE TABLE mô tả các phụ thuộc hàm"}, correct: "B" },
+                { id: "q7", text: "Câu hỏi truy vấn có thể biểu diễn bằng:", answers: {"A": "Các phép toán đại số quan hệ và cây quan hệ", "B": "Các phép toán đại số quan hệ hoặc cây quan hệ", "C": "Các phép toán đại số quan hệ", "D": "Cây đại số quan hệ"}, correct: "B" },
+                { id: "q8", text: "Hãy chọn từ/cụm từ tương ứng để hoàn thiện khẳng định sau: Cấp quyền READ người sử dụng chỉ được quyền...", answers: {"A": "Chỉ được đọc và ghi", "B": "Sửa đổi, bổ sung và cập nhật dữ liệu", "C": "Sử dụng trong các câu vấn tin và cập nhật, lưu trữ dữ liệu", "D": "Vấn tin, không được phép sửa đổi, bổ sung"}, correct: "D" },
+                { id: "q9", text: "Nếu một bảng dữ liệu HANG_HOA có 3 trường: Ten_hang, Nha_cc, SL_nhap, thì câu lệnh SQL sau thực hiện công việc gì: Select * From HANG_HOA where Nha_cc='SN'", answers: {"A": "Hiện toàn bộ dữ liệu từ bảng HANG_HOA với Nha_cc='SN'", "B": "Hiện toàn bộ dữ liệu từ bảng HANG_HOA", "C": "Hiện toàn bộ dữ liệu từ bảng HANG_HOA trừ Nha_cc='SN'", "D": "Câu lệnh sai"}, correct: "A" },
+                { id: "q10", text: "Một lược đồ cơ sở dữ liệu về hàng hoá gồm có 2 quan hệ sau:HANG{MA_HANG, TEN_HANG, lOAI_HANG, SL_TON}.   BAN{TEN_KH, MA_HANG, SL_BAN, NGAY_BAN}.   Câu lệnh SQL sau đây dùng thực hiện công việc gì?<br>   Select TEN_HANG, HANG.MA_HANG, SL_BAN <br>     From HANG, BAN<br>    where HANG.MA_HANG = BAN.MA_HANG", answers: {"A": "Hiện TEN_HANG, MA_HANG, SL_BAN", "B": "Hiện TEN_HANG, SL_BAN", "C": "Hiện MA_HANG, SL_BAN", "D": "Hiện MA_HANG"}, correct: "A" }
+            ],
+        };
+        /* ---------------------
+       BIẾN TOÀN CỤC
+    --------------------- */
+    let questions = [];
+        let score = 0;
+        let totalQuestions = 0;
+        let allAnswers = [];
+        let timer;
+        let timeLeft = 1800;
+        let currentQuestionIndex = 0;
+
+        const startSound = new Audio('https://www.soundjay.com/buttons/beep-01a.mp3');
+        const correctSound = new Audio('https://www.soundjay.com/buttons/beep-07.mp3');
+        const wrongSound = new Audio('https://www.soundjay.com/buttons/beep-02.mp3');
+        const endSound = new Audio('https://www.soundjay.com/buttons/beep-03.mp3');
+
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+        }
+
+        function shuffleAnswers(answers) {
+            let keys = Object.keys(answers);
+            shuffleArray(keys);
+            let newAnswers = {};
+            let labels = ["A", "B", "C", "D"];
+            keys.forEach((key, index) => {
+                newAnswers[labels[index]] = answers[key];
+            });
+            return newAnswers;
+        }
+
+        function startTimer() {
+            timer = setInterval(() => {
+                timeLeft--;
+                let minutes = Math.floor(timeLeft / 60);
+                let seconds = timeLeft % 60;
+                document.getElementById("timer").innerText = `Thời gian còn lại: ${minutes}:${seconds < 10 ? '0' + seconds : seconds}`;
+                if (timeLeft <= 0) {
+                    clearInterval(timer);
+                    endQuiz();
+                }
+            }, 1000);
+        }
+
+        function updateQuizOptions() {
+            let chapterSelector = document.getElementById("chapterSelector");
+            let quizSelector = document.getElementById("quizSelector");
+            let selectedChapter = chapterSelector.value;
+            quizSelector.innerHTML = '<optgroup label="-- Chọn mức độ --"></optoption>';
+            quizSelector.disabled = true;
+
+            if (selectedChapter && quizzes[selectedChapter]) {
+                quizSelector.disabled = false;
+                let levels = quizzes[selectedChapter];
+                for (let level in levels) {
+                    let option = document.createElement("option");
+                    option.value = levels[level][0];
+                    option.text = level;
+                    quizSelector.appendChild(option);
+                }
+            }
+        }
+
+        function loadQuestions() {
+            startSound.play();
+            let selectedQuiz = document.getElementById("quizSelector").value;
+            let quizQuestions = JSON.parse(JSON.stringify(quizQuestionsData[selectedQuiz])) || [];
+
+            if (quizQuestions.length === 0) {
+                alert("Đề này chưa có câu hỏi. Vui lòng chọn đề khác!");
+                return;
+            }
+
+            shuffleArray(quizQuestions);
+            questions = quizQuestions.map(q => {
+                let shuffled = shuffleAnswers(q.answers);
+                let correctKey = Object.keys(shuffled).find(k => shuffled[k] === q.answers[q.correct]);
+                return { ...q, answers: shuffled, correct: correctKey };
+            });
+
+            totalQuestions = questions.length;
+            currentQuestionIndex = 0;
+            score = 0;
+            allAnswers = [];
+
+            document.getElementById("startBtn").style.display = "none";
+            document.getElementById("questionContainer").style.display = "block";
+
+            timeLeft = 1800;
+            startTimer();
+            updateHighScoreDisplay();
+            showQuestion(currentQuestionIndex);
+        }
+
+        function showQuestion(index) {
+          if (index >= totalQuestions) {
+              endQuiz();
+              return;
+          }
+          let questionObj = questions[index];
+          document.getElementById("questionText").innerHTML = `Câu ${index + 1}: ${questionObj.text}`;
+    
+          let answersHtml = Object.entries(questionObj.answers).map(([key, value]) => {
+              return `<label><input type="radio" name="answer" value="${key}" onclick="checkAnswer('${key}')">${key}. ${value}</label>`;
+          }).join("");
+          document.getElementById("answers").innerHTML = answersHtml;
+          document.getElementById("result").innerText = "";
+          document.getElementById("nextBtn").style.display = "none";
+}
+
+        function checkAnswer(chosenKey) {
+            let question = questions[currentQuestionIndex];
+            let resultDiv = document.getElementById("result");
+            let isCorrect = (chosenKey === question.correct);
+
+            allAnswers.push({
+                question: question.text,
+                selected: chosenKey,
+                correct: question.correct
+            });
+
+            if (isCorrect) {
+                resultDiv.innerText = "✔ Đúng!";
+                resultDiv.className = "correct";
+                score++;
+                correctSound.play();
+            } else {
+                resultDiv.innerText = "✖ Sai!";
+                resultDiv.className = "wrong";
+                wrongSound.play();
+            }
+
+            let radios = document.getElementsByName("answer");
+            for (let r of radios) {
+                r.disabled = true;
+            }
+            document.getElementById("nextBtn").style.display = "inline-block";
+        }
+
+        function nextQuestion() {
+            currentQuestionIndex++;
+            if (currentQuestionIndex < totalQuestions) {
+                showQuestion(currentQuestionIndex);
+            } else {
+                endQuiz();
+            }
+        }
+
+        function endQuiz() {
+            clearInterval(timer);
+            document.getElementById("questionContainer").style.display = "none";
+            
+            let finalScore = document.getElementById("finalScore");
+            finalScore.innerText = `Bạn đạt ${score}/${totalQuestions} điểm!`;
+            finalScore.style.display = "block";
+
+            document.getElementById("timer").innerText = "Hết giờ!";
+            endSound.play();
+
+            document.getElementById("restartBtn").style.display = "block";
+            updateHighScore();
+            showAllAnswers();
+        }
+
+        function showAllAnswers() {
+            let reviewSection = document.getElementById("reviewSection");
+            let reviewContent = document.getElementById("reviewContent");
+            reviewSection.style.display = "block";
+
+            let reviewHtml = allAnswers.map((ans, index) => {
+                let questionObj = questions[index];
+                let answersHTML = Object.entries(questionObj.answers).map(([key, value]) => {
+                    let isSelected = (key === ans.selected);
+                    let isCorrect = (key === questionObj.correct);
+                    return `
+                        <p style="margin-left: 20px; color: ${isCorrect ? 'var(--correct-color)' : (isSelected ? 'var(--wrong-color)' : 'var(--text-color)')}; font-weight: ${isSelected ? 'bold' : 'normal'}">
+                            ${key}. ${value} ${isSelected ? (isCorrect ? '✔ (Bạn chọn đúng)' : '✖ (Bạn chọn sai)') : ''}
+                        </p>`;
+                }).join("");
+
+                return `
+                    <p><strong>Câu ${index + 1}:</strong> ${ans.question}</p>
+                    ${answersHTML}
+                    <p><strong>✅ Đáp án đúng:</strong> ${questionObj.correct}. ${questionObj.answers[questionObj.correct]}</p>
+                    <hr>`;
+            }).join("");
+
+            reviewContent.innerHTML = reviewHtml;
+        }
+
+        function updateHighScore() {
+            let highScore = localStorage.getItem('highScore') || 0;
+            if (score > highScore) {
+                localStorage.setItem('highScore', score);
+                highScore = score;
+            }
+            updateHighScoreDisplay();
+        }
+
+        function updateHighScoreDisplay() {
+            let highScore = localStorage.getItem('highScore') || 0;
+            document.getElementById("highScore").innerText = `Điểm cao nhất: ${highScore}/${totalQuestions}`;
+        }
+
+        function restartQuiz() {
+            clearInterval(timer);
+            score = 0;
+            allAnswers = [];
+            currentQuestionIndex = 0;
+
+            document.getElementById("finalScore").style.display = "none";
+            document.getElementById("reviewSection").style.display = "none";
+            document.getElementById("restartBtn").style.display = "none";
+            document.getElementById("startBtn").style.display = "inline-block";
+            document.getElementById("questionContainer").style.display = "none";
+            document.getElementById("timer").innerText = "";
+            updateHighScoreDisplay();
+            document.getElementById("reviewContent").innerHTML = "";
+
+        }
+  </script>
+</body>
+</html>
